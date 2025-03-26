@@ -5,7 +5,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: netcracker/qubership-envgene
+  IMAGE_NAME: BackendBits/qubership-envgene
 
 jobs:
   build-and-push-image:
