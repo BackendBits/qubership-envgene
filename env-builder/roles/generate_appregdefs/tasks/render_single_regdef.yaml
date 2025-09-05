@@ -44,22 +44,45 @@
       set_fact:
         regdef_raw_rendered: "{{ regdef_rendered_slurp.content | b64decode }}"
 
-    # 6) Parse for the name field
+    # 6) Parse for the name field and detect version
     - name: Parse rendered RegDef YAML into dict
       set_fact:
         regdef_content: "{{ regdef_raw_rendered | from_yaml }}"
 
-    # 7) Fail fast if name is missing
-    - name: Ensure RegDef name was parsed
+    # 7) Version detection (minimal change)
+    - name: Detect RegDef version
+      set_fact:
+        regdef_version: "{{ regdef_content.version | default('1.0') }}"
+
+    # 8) Validate based on version
+    - name: Validate V1 RegDef (existing logic)
       assert:
         that:
           - regdef_content.name is defined
           - regdef_content.name | length > 0
-        fail_msg: "Rendered RegDef from {{ item.path }} is missing a name field"
+          - regdef_content.credentialsId is defined
+        fail_msg: "RegDef V1 from {{ item.path }} missing required fields (name, credentialsId)"
+      when: regdef_version == "1.0"
 
-    # 8) Write out the final file
+    - name: Validate V2 RegDef (new logic)
+      assert:
+        that:
+          - regdef_content.name is defined
+          - regdef_content.name | length > 0
+          - regdef_content.version == "2.0"
+          - regdef_content.authConfig is defined
+        fail_msg: "RegDef V2 from {{ item.path }} missing required fields"
+      when: regdef_version == "2.0"
+
+    # 9) Write out the final file
     - name: Save final rendered RegDef
       copy:
         content: "{{ regdef_raw_rendered }}"
         dest:    "{{ current_env_dir }}/RegDefs/{{ regdef_content.name }}.yml"
         mode:    '0644'
+
+    # 10) Clean up temporary file
+    - name: Clean up temporary rendered file
+      file:
+        path: "{{ tmp_render_dir }}/{{ template_name }}.{{ render_timestamp }}.rendered.regdef.yml"
+        state: absent

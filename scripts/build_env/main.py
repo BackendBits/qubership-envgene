@@ -346,7 +346,12 @@ def validate_appregdefs(render_dir, env_name):
             print(f"[INFO] No RegDef YAMLs found in {regdef_dir}")
         for file in regdef_files:
             print(f"[VALIDATING] RegDef file: {file}")
-            validate_yaml_by_scheme_or_fail(file, "schemas/regdef.schema.json")
+            # Detect RegDef version and select appropriate schema
+            regdef_data = openYaml(file)
+            regdef_version = regdef_data.get('version', '1.0')
+            schema_file = "schemas/regdef-v2.schema.json" if regdef_version == "2.0" else "schemas/regdef.schema.json"
+            print(f"[INFO] Using schema: {schema_file} for version {regdef_version}")
+            validate_yaml_by_scheme_or_fail(file, schema_file)
 
 
 def render_environment(env_name, cluster_name, templates_dir, all_instances_dir, output_dir, g_template_version, work_dir):
