@@ -331,7 +331,6 @@ def validate_regdef_v2_authconfig(regdef_content, file_path):
                         f"Available authConfigs: {list(auth_configs.keys())}"
                     )
 
-
 def render_environment(env_name, cluster_name, templates_dir, all_instances_dir, output_dir, g_template_version,
                        work_dir):
     logger.info(f'env: {env_name}')
